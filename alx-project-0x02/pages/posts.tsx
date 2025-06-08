@@ -1,46 +1,47 @@
-import React, { useEffect, useState } from "react";
-import Header from "../components/layout/Header";
-import PostCard from "../components/common/PostCard";
-import { PostProps } from "../interfaces";
+// pages/posts.tsx
+import React from "react";
+import Header from "@/components/layout/Header";
+import PostCard from "@/components/common/PostCard";
+import { PostProps } from "@/interfaces";
 
-export default function Posts() {
-  const [posts, setPosts] = useState<PostProps[]>([]);
-  const [loading, setLoading] = useState(true);
+interface PostsPageProps {
+  posts: PostProps[];
+}
 
-  useEffect(() => {
-    async function fetchPosts() {
-      try {
-        const res = await fetch("https://jsonplaceholder.typicode.com/posts");
-        const data: PostProps[] = await res.json();
-        setPosts(data.slice(0, 10)); // Limit to first 10 posts
-      } catch (error) {
-        console.error("Failed to fetch posts:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchPosts();
-  }, []);
-
+export default function Posts({ posts }: PostsPageProps) {
   return (
-    <>
+    <div className="min-h-screen p-8 bg-gray-50 dark:bg-gray-900">
       <Header />
-      <main className="p-8">
-        <h1 className="text-3xl font-bold mb-6">Posts</h1>
-        {loading ? (
-          <p>Loading posts...</p>
-        ) : (
-          posts.map((post) => (
-            <PostCard
-              key={post.id}
-              title={post.title}
-              body={post.body}
-              userId={post.userId}
-              id={post.id}
-            />
-          ))
-        )}
-      </main>
-    </>
+      <h1 className="text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100">Posts</h1>
+
+      <div className="flex flex-col gap-6">
+        {posts.map((post) => (
+          <PostCard
+            key={post.id}
+            title={post.title}
+            content={post.body}  // API returns 'body' instead of 'content'
+            userId={post.userId}
+          />
+        ))}
+      </div>
+    </div>
   );
+}
+
+// Fetch posts at build time
+export async function getStaticProps() {
+  const res = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=10");
+  const data = await res.json();
+
+  // Optional: map data if needed
+  const posts: PostProps[] = data.map((post: any) => ({
+    id: post.id,
+    title: post.title,
+    body: post.body,
+    userId: post.userId,
+  }));
+
+  return {
+    props: { posts },
+  };
 }
